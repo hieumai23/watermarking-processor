@@ -105,6 +105,6 @@ ACC: reg
     generic map (n+1)
     port map (o_D, o_A, i_clk, s_add, s_shift, s_load, '0');
     
-o_result <= o_A(n-1 downto 2) & o_Q(1 downto 0);
+o_result <= o_A(n-3 downto 0) & o_Q(n-1 downto n-2);
 
 end Behavioral;
