@@ -40,7 +40,7 @@ entity fixed_point_mult is
         i_start: in std_logic;
         i_clk: in std_logic;
         o_done: out std_logic;
-        o_result: out std_logic_vector(2*n-1 downto 0)
+        o_result: out std_logic_vector(n-1 downto 0)
     );
 end fixed_point_mult;
 
@@ -105,6 +105,6 @@ ACC: reg
     generic map (n+1)
     port map (o_D, o_A, i_clk, s_add, s_shift, s_load, '0');
     
-o_result <= o_A(n-1 downto 0) & o_Q;
+o_result <= o_A(n-3 downto 0) & o_Q(n-1 downto n-2);
 
 end Behavioral;
