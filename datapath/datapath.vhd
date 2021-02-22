@@ -2,7 +2,7 @@
 -- Company: 
 -- Engineer: 
 -- 
--- Create Date: 02/16/2021 05:21:49 AM
+-- Create Date: 02/22/2021 12:16:21 AM
 -- Design Name: 
 -- Module Name: datapath - Behavioral
 -- Project Name: 
@@ -32,7 +32,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity datapath is
-    generic(n: integer:= 8);
+    generic(n: integer:= 8;
+            q: integer:= 2);
     port(
         i_amax: in std_logic_vector(n-1 downto 0);
         i_ak: in std_logic_vector(n-1 downto 0);
@@ -57,53 +58,46 @@ entity datapath is
 end datapath;
 
 architecture Behavioral of datapath is
-    component fixed_point_mult is
+    component array_Multiplier is 
+    generic (m: natural := 8; 
+             n: natural := 8;
+             q: natural := 2);
+    port( x : in std_logic_vector(m-1 downto 0);
+          y : in std_logic_vector(n-1 downto 0); 
+          o : out std_logic_vector(m-1 downto 0) ); 
+    end component; 
+
+    component MUX21 is
         generic(n: integer:= 8);
         port(
-            i_mult1: in std_logic_vector(n-1 downto 0);
-            i_mult2: in std_logic_vector(n-1 downto 0);
-            i_start: in std_logic;
-            i_clk: in std_logic;
-            o_done: out std_logic;
-            o_result: out std_logic_vector(n-1 downto 0)
+            i_input1: in std_logic_vector(n-1 downto 0);
+            i_input2: in std_logic_vector(n-1 downto 0);
+            i_sel: in std_logic;
+            o_res: out std_logic_vector(n-1 downto 0)
         );
     end component;
     
-    component MUX21 is
-    generic(n: integer:= 8);
+    component adder is
+    generic(n: integer := 8);
     port(
-        i_signal1: in std_logic_vector(n-1 downto 0);
-        i_signal2: in std_logic_vector(n-1 downto 0);
-        i_select: in std_logic;
-        o_result: out std_logic_vector(n-1 downto 0)
+        i_input1: in std_logic_vector(n-1 downto 0);
+        i_input2: in std_logic_vector(n-1 downto 0);
+        o_output: out std_logic_vector(n-1 downto 0)
     );
     end component;
-    
-    component cla_adder is
-    generic(n: integer:= 8);
-    port(
-        i_add1: in std_logic_vector(n-1 downto 0);
-        i_add2: in std_logic_vector(n-1 downto 0);
-        o_result: out std_logic_vector(n-1 downto 0);
-        o_carry: out std_logic
-    );
-    end component;
-    
+
     signal o_MUX0, o_MUX1: std_logic_vector(n-1 downto 0);
     signal o_MUX2, o_MUX3: std_logic_vector(n-1 downto 0);
+    signal o_MULT1, o_MULT2, o_MULT3: std_logic_vector(n-1 downto 0);
     signal o_MUX4, o_MUX5: std_logic_vector(n-1 downto 0);
-    signal o_MULT1, o_MULT2: std_logic_vector(n-1 downto 0);
-    signal o_MULT1_done, o_MULT2_done: std_logic;
-    signal i_MULT3_rdy: std_logic;
-    signal o_MULT3: std_logic_vector(n-1 downto 0);
-    signal o_MULT3_done: std_logic;
     signal o_ADDER: std_logic_vector(n-1 downto 0);
-    
+
 begin
+
 MUX0: MUX21 
     generic map(n)
     port map(i_amax, i_ak, i_edge, o_MUX0);
-
+    
 MUX1: MUX21 
     generic map(n)
     port map(i_bmax, i_bk, i_edge, o_MUX1);
@@ -115,20 +109,18 @@ MUX2: MUX21
 MUX3: MUX21 
     generic map(n)
     port map(i_aI, o_MUX1, i_select, o_MUX3);
-    
-MULT1: fixed_point_mult
-    generic map(n)
-    port map(i_Imn, o_MUX2, i_start, i_clk, o_MULT1_done, o_MULT1);
-    
-MULT2: fixed_point_mult
-    generic map(n)
-    port map(i_Wmn, o_MUX3, i_start, i_clk, o_MULT2_done, o_MULT2);
 
-i_MULT3_rdy <= (o_MULT1_done and o_MULT2_done);
+MULT1: array_Multiplier
+    generic map(n, n, q)
+    port map (i_Imn, o_MUX2, o_MULT1);
 
-MULT3: fixed_point_mult
-    generic map(n)
-    port map(o_MULT1, o_MULT2, i_MULT3_rdy, i_clk, o_MULT3_done, o_MULT3);
+MULT2: array_Multiplier
+    generic map(n, n, q)
+    port map (i_Wmn, o_MUX3, o_MULT2);
+    
+MULT3: array_Multiplier
+    generic map(n, n, q)
+    port map (o_MULT1, o_MULT2, o_MULT3);
     
 MUX4: MUX21 
     generic map(n)
@@ -137,11 +129,9 @@ MUX4: MUX21
 MUX5: MUX21 
     generic map(n)
     port map(o_MULT3, o_MULT2, i_select, o_MUX5);
-    
-ADDER: cla_adder
-    generic map(n)
-    port map(o_MUX4, o_MUX5, o_ADDER, open);
 
-o_IWmn <= o_ADDER;
+ADD_OUT: adder
+    generic map(n)
+    port map(o_MUX4, o_MUX5, o_IWmn);
 
 end Behavioral;
