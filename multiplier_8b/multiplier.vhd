@@ -73,14 +73,6 @@ architecture Behavioral of multiplier is
     
     out_R_int <= std_logic_vector(Rint);
     out_R_frac <= std_logic_vector(Rfrac);
-    
---    for i in q-1 downto 0 loop
---        out_R_int(i) <= Rint(i);
---        end loop;
-        
---    for i in n-q-1 downto 0 loop
---        out_R_frac(i) <= Rfrac(i);
---        end loop;
    
     end procedure;
     
