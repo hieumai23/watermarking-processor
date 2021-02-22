@@ -1,83 +1,64 @@
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date: 02/21/2021 05:05:33 PM
--- Design Name: 
--- Module Name: multiplier - Behavioral
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
--- Description: 
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
--- 
-----------------------------------------------------------------------------------
-
-
-library IEEE;
+library IEEE; 
 use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.NUMERIC_STD.ALL;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
+entity array_Multiplier is 
+generic (m: natural := 8; 
+		 n: natural := 8); 
+port( x : in std_logic_vector(m-1 downto 0);
+	  y : in std_logic_vector(n-1 downto 0); 
+	  p : out std_logic_vector(m+n-1 downto 0) ); 
+end array_Multiplier; 
 
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+architecture struc of array_Multiplier is
+type two_d_array is array (natural range <>, natural range <>) of std_logic; 
+signal xi, yi, psi, ci: two_d_array(n-1 downto 0, m-1 downto 0); 
+component pe 
+port (xi, yi, psi, ci : in std_logic;
+ 	  xo, yo, pso, co : out std_logic); 
+end component;
 
-entity multiplier is
-    generic(n: integer:= 8; q: integer:= 2);
-    port(
-        in_X, in_Y: in std_logic_vector(n-1 downto 0);
-        out_R_int: out std_logic_vector(q-1 downto 0);
-        out_R_frac: out std_logic_vector(n-q-1 downto 0)
-    );
-end multiplier;
+begin 
+INTX: for j in 0 to m-1 generate 
+	xi(0,j) <= x(j);
+	psi(0,j) <= '0';
+	end generate INTX;
+INTY: for i in 0 to n-1 generate 
+		yi(i,0) <= y(i);
+		ci(i,0) <= '0';
+	end generate INTY;
+G1: for i in 0 to n-1 generate 
+G2: for j in 0 to m-1 generate 
 
-architecture Behavioral of multiplier is
-    procedure Multiply(signal in_X, in_Y: in std_logic_vector(n-1 downto 0);
-                       signal out_R_int: out std_logic_vector(q-1 downto 0);
-                       signal out_R_frac: out std_logic_vector(n-q-1 downto 0)) is
-        variable Xint, Yint, Tint, Rint: std_logic_vector(q-1 downto 0);
-        variable Xfrac, Yfrac, Tfrac, Rfrac: std_logic_vector(n-q-1 downto 0);
-    begin
-    Xint := in_X(n-1 downto n-q);
-    Yint := in_Y(n-1 downto n-q);
-    Xfrac := in_X(n-q-1 downto 0);
-    Yfrac := in_Y(n-q-1 downto 0);
-    
-    int_loop: for i in q-1 downto 0 loop
-        if Xint(i) = '1' then Tint := Yint; else Tint := (others => '0'); end if;
-        shift_int_loop: for j in i downto 1 loop
-            Tint := Tint(q-2 downto 0) & '0';
-            end loop;
-        Rint := Rint + Tint;
-    end loop;
+G3: if j=0 and i<n-1 generate 
+ELM: pe port map
+(xi(i,j),yi(i,j),psi(i,j),ci(i,j),
+xi(i+1,j),yi(i,j+1),p(i),ci(i,j+1));
+end generate G3;
 
-    frac_loop: for i in n-q-1 downto 0 loop
-        if Xfrac(i) = '1' then Tfrac := Yfrac; else Tfrac := (others => '0'); end if;
-        shift_frac_loop: for j in n-q downto 1 loop
-            Tfrac := '0' & Tfrac(n-q-1 downto 1);
-            end loop;
-        Rfrac := Rfrac + Tfrac;
-    end loop;
-    
-    out_R_int <= std_logic_vector(Rint);
-    out_R_frac <= std_logic_vector(Rfrac);
-   
-    end procedure;
-    
-begin
+G4: if j>0 and j<m-1 and i<n-1 generate 
+ELM: pe port map
+(xi(i,j),yi(i,j),psi(i,j),ci(i,j),
+xi(i+1,j),yi(i,j+1),psi(i+1,j-1),ci(i,j+1));
+end generate G4;
 
-    Multiply(in_X => in_X, in_Y => in_Y, out_R_int => out_R_int, out_R_frac => out_R_frac);
+G5: if j=m-1 and i<n-1 generate 
+ELM: pe port map
+(xi(i,j),yi(i,j),psi(i,j),ci(i,j),
+xi(i+1,j),open,psi(i+1,j-1),psi(i+1,j));
+end generate G5;
 
-end Behavioral;
+G6: if j<m-1 and i=n-1 generate 
+ELM: pe port map
+(xi(i,j),yi(i,j),psi(i,j),ci(i,j),
+open,yi(i,j+1),p(i+j),ci(i,j+1));
+end generate G6;
+
+G7: if j=m-1 and i=n-1 generate 
+ELM: pe port map
+(xi(i,j),yi(i,j),psi(i,j),ci(i,j),
+open,open,p(i+j),p(i+j+1));
+end generate G7;
+
+end generate G2;
+end generate G1;
+end struc;
