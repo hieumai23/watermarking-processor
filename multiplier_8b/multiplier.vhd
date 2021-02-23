@@ -6,12 +6,13 @@ generic (m: natural := 8;
 		 n: natural := 8); 
 port( x : in std_logic_vector(m-1 downto 0);
 	  y : in std_logic_vector(n-1 downto 0); 
-	  p : out std_logic_vector(m+n-1 downto 0) ); 
+	  o : out std_logic_vector(m-1 downto 0) ); 
 end array_Multiplier; 
 
 architecture struc of array_Multiplier is
 type two_d_array is array (natural range <>, natural range <>) of std_logic; 
-signal xi, yi, psi, ci: two_d_array(n-1 downto 0, m-1 downto 0); 
+signal xi, yi, psi, ci: two_d_array(n-1 downto 0, m-1 downto 0);
+signal p : std_logic_vector(m+n-1 downto 0) ); 
 component pe 
 port (xi, yi, psi, ci : in std_logic;
  	  xo, yo, pso, co : out std_logic); 
@@ -61,4 +62,7 @@ end generate G7;
 
 end generate G2;
 end generate G1;
+
+o <= p(m+n-q-1 downto m-q);
+
 end struc;
