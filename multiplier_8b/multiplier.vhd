@@ -3,7 +3,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity array_Multiplier is 
 generic (m: natural := 8; 
-		 n: natural := 8); 
+		 n: natural := 8;
+		 q: natural := 2); 
 port( x : in std_logic_vector(m-1 downto 0);
 	  y : in std_logic_vector(n-1 downto 0); 
 	  o : out std_logic_vector(m-1 downto 0) ); 
@@ -12,7 +13,7 @@ end array_Multiplier;
 architecture struc of array_Multiplier is
 type two_d_array is array (natural range <>, natural range <>) of std_logic; 
 signal xi, yi, psi, ci: two_d_array(n-1 downto 0, m-1 downto 0);
-signal p : std_logic_vector(m+n-1 downto 0) ); 
+signal p : std_logic_vector(m+n-1 downto 0);
 component pe 
 port (xi, yi, psi, ci : in std_logic;
  	  xo, yo, pso, co : out std_logic); 
