@@ -33,7 +33,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity alpha_beta_unit is
     generic(n: natural := 8;
-            q: natural := 2);
+            q: natural := 2;
+            log_block: natural := 4);
     port(
         i_Imn: in std_logic_vector(n-1 downto 0);
         i_amax: in std_logic_vector(n-1 downto 0);
@@ -104,40 +105,58 @@ architecture Behavioral of alpha_beta_unit is
     );
     end component;
 
+    component sub_abs is
+    generic(n: natural:= 8);
+    port(
+        i_a: in std_logic_vector(n-1 downto 0);
+        i_b: in std_logic_vector(n-1 downto 0);
+        i_cin: in std_logic;
+        o_z: out std_logic_vector(n-1 downto 0)
+    );
+    end component;
+
     signal p_Imn, o_ACC0: std_logic_vector(2*n-1 downto 0);
-    signal o_shift0: std_logic_vector(n-1 downto 0);
-    signal o_larger_ukI, o_smaller_ukI: std_logic_vector(n-1 downto 0);
-    signal o_ADDSUB0, o_EXP: std_logic_vector(n-1 downto 0);
+    signal o_shift0, c_half: std_logic_vector(n-1 downto 0);
+    signal o_SUBABS0, o_EXP: std_logic_vector(n-1 downto 0);
+    signal zero_8b: std_logic_vector(n-1 downto 0);
 
 begin
 
-p_Imn <= "00000000" & i_Imn;
+zero_8b <= (others => '0');
+p_Imn <= zero_8b & i_Imn;
 
 -- LEFT SIDE --
 
 AB_ACC0: accumulator
     generic map(2*n)
-    port map(p_Imn, '0', '1', i_reset, i_enable, o_ACC0, open);
+    port map(
+            i_x => p_Imn,
+            i_cin => '0',
+            i_ctrl => '1',
+            i_reset => i_reset,
+            i_enable => i_enable,
+            o_z => o_ACC0,
+            o_cout => open
+        );
     
-o_shift0 <= "00" & o_ACC0(2*n-1 downto 10);
+o_shift0 <= "00" & o_ACC0(n+log_block-1 downto log_block+q);
+c_half <= (n-q-1 => '1', others => '0');
 
-AB_MUX_larger_ukI_05: MUX21
+AB_SUBABS0: sub_abs
     generic map(n)
-    port map("00100000", o_shift0, o_shift0(3), o_larger_ukI);
-
-AB_MUX_smaller_ukI_05: MUX21
-    generic map(n)
-    port map(o_shift0, "00100000", o_shift0(3), o_smaller_ukI);
-
-AB_ADDSUB0: addsub
-    generic map(n)
-    port map(o_larger_ukI, o_smaller_ukI, '0', '0', open, o_ADDSUB0);
+    port map (
+        i_a => o_shift0,
+        i_b => c_half,
+        i_cin => '0',
+        o_z => o_SUBABS0
+    );
     
-AB_EXP: exp_unit
+AB_EXP: exp_unit 
     generic map(n, q)
-    port map (o_ADDSUB0, o_EXP);
-    
-
+    port map(
+        i_x => o_SUBABS0,
+        o_e => o_EXP
+    );
 
 ---------------------------------------------
 

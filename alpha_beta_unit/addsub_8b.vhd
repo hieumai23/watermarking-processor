@@ -55,9 +55,10 @@ ADD_SUB_8B_LOGIC: process (i_a, i_b, i_cin, i_ctrl) is
     variable temp_b: std_logic_vector(n-1 downto 0);
     variable temp_s: std_logic_vector(n-1 downto 0);
     variable temp_c_in: std_logic;
+    variable neg_one: std_logic_vector(n-1 downto 0);
 begin
-    
-    b_sub := i_b xor "11111111";
+    neg_one := (others => '1');
+    b_sub := i_b xor neg_one;
     temp_c_in := '0';
     if (i_ctrl = '1') then
         temp_b := i_b;
