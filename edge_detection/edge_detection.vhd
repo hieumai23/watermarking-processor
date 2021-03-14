@@ -48,8 +48,8 @@ architecture Behavioral of edge_detection is
         port(
              A: in std_logic_vector(n-1 downto 0);
              B: in std_logic_vector(n-1 downto 0);
-             geq: out std_logic;
-             lt: out std_logic
+             gt: out std_logic;
+             leq: out std_logic
              ); 
     end component;
     
@@ -150,7 +150,7 @@ COMPARE: comparator_8b
     generic map(n)
     port map(A => g_mu,
              B => i_amplitude_threshold,
-             geq => o_edge,
-             lt => open);
+             gt => o_edge,
+             leq => open);
     
 end Behavioral;
