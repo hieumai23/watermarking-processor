@@ -27,8 +27,8 @@ entity comparator_8b is
     port(
          A: in std_logic_vector(n-1 downto 0);
          B: in std_logic_vector(n-1 downto 0);
-         geq: out std_logic;
-         lt: out std_logic
+         gt: out std_logic;
+         leq: out std_logic
          ); 
 end comparator_8b;
 
@@ -46,8 +46,9 @@ architecture Behavioral of comparator_8b is
         );
     end component;
 
+    signal out_tmp: std_logic_vector(n-1 downto 0);
     signal addsub_out: std_logic;
-
+    signal eq: std_logic;
 begin
 
 AS: addsub
@@ -57,10 +58,10 @@ AS: addsub
              i_cin => '0',
              i_ctrl => '0', -- subtract
              o_cout => addsub_out,
-             o_z => open
-             );
+             o_z => out_tmp);
     
-    geq <= addsub_out and '1';
-    lt <= not (addsub_out and '1');
+eq <= not (out_tmp(0) or out_tmp(1) or out_tmp(2) or out_tmp(3) or out_tmp(4) or out_tmp(5) or out_tmp(6) or out_tmp(7) or (not addsub_out));
+gt <= addsub_out and (not eq);
+leq <= (not addsub_out) or eq;
 
 end Behavioral;
