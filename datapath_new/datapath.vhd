@@ -166,15 +166,15 @@ EDGE_DETECT: edge_detection
               
 MUX1: MUX21
     generic map (n => n)
-    port map (i_input1 => i_amax,
-              i_input2 => tmp_ak,
+    port map (i_input1 => tmp_ak,
+              i_input2 => i_amax,
               i_sel => tmp_edge,
               o_res => tmp_mux1);
 
 MUX2: MUX21
     generic map (n => n)
-    port map (i_input1 => i_bmin,
-              i_input2 => tmp_bk,
+    port map (i_input1 => tmp_bk,
+              i_input2 => i_bmin,
               i_sel => tmp_edge,
               o_res => tmp_mux2);
 
@@ -235,15 +235,15 @@ end process;
 
 MUX3: MUX21
     generic map (n => n)
-    port map (i_input1 => tmp_reg_file,
-              i_input2 => tmp_mux1,
+    port map (i_input1 => tmp_mux1,
+              i_input2 => tmp_reg_file,
               i_sel => i_select,
               o_res => tmp_mux3);
 
 MUX4: MUX21
     generic map (n => n)
-    port map (i_input1 => i_ai,
-              i_input2 => tmp_mux2,
+    port map (i_input1 => tmp_mux2,
+              i_input2 => i_ai,
               i_sel => i_select,
               o_res => tmp_mux4);
 
@@ -275,15 +275,15 @@ MUL3: array_Multiplier
 
 MUX5: MUX21
     generic map (n => n)
-    port map (i_input1 => i_Imn,
-              i_input2 => tmp_mul1,
+    port map (i_input1 => tmp_mul1,
+              i_input2 => i_Imn,
               i_sel => i_select,
               o_res => tmp_mux5);
               
 MUX6: MUX21
     generic map (n => n)
-    port map (i_input1 => tmp_mul3,
-              i_input2 => tmp_mul2,
+    port map (i_input1 => tmp_mul2,
+              i_input2 => tmp_mul3,
               i_sel => i_select,
               o_res => tmp_mux6);
               
