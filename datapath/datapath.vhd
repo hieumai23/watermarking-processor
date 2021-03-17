@@ -104,6 +104,14 @@ architecture Behavioral of datapath is
               o : out std_logic_vector(m-1 downto 0) ); 
     end component;
     
+    component datapath_Multiplier is 
+        generic (m: natural := 8; 
+                 n: natural := 8);
+        port( x : in std_logic_vector(m-1 downto 0);
+              y : in std_logic_vector(n-1 downto 0); 
+              o : out std_logic_vector(2*m-1 downto 0) ); 
+    end component;
+    
     component MUX21 is
         generic(n: integer:= 8);
         port(
@@ -131,7 +139,10 @@ architecture Behavioral of datapath is
     signal tmp_mux1, tmp_mux2, tmp_mux3, tmp_mux4, tmp_mux5, tmp_mux6: std_logic_vector(n-1 downto 0);
     signal leq_2, leq_64, leq_128, leq_192, lt_256: std_logic;
     signal tmp_reg_file: std_logic_vector(n-1 downto 0);
-    signal tmp_mul1, tmp_mul2, tmp_mul3: std_logic_vector(n-1 downto 0);
+    signal tmp_mul1, tmp_mul2, tmp_mul3: std_logic_vector(2*n-1 downto 0);
+    signal tmp_mux3_padded, tmp_mux4_padded: std_logic_vector(n-1 downto 0);
+    signal o_adder: std_logic_vector(n-1 downto 0);
+    signal cout_adder: std_logic;
     
 begin
 
@@ -233,57 +244,57 @@ begin
     end if;
 end process;
 
+tmp_mux3_padded <= tmp_mux1(5 downto 0) & "00";
+tmp_mux4_padded <= tmp_mux2(5 downto 0) & "00";
+
 MUX3: MUX21
     generic map (n => n)
-    port map (i_input1 => tmp_mux1,
+    port map (i_input1 => tmp_mux3_padded,
               i_input2 => tmp_reg_file,
               i_sel => i_select,
               o_res => tmp_mux3);
 
 MUX4: MUX21
     generic map (n => n)
-    port map (i_input1 => tmp_mux2,
+    port map (i_input1 => tmp_mux4_padded,
               i_input2 => i_ai,
               i_sel => i_select,
               o_res => tmp_mux4);
 
 -- multiply 8Q0 with 0Q8 gets 8Q8, keep the whole number part
 
-MUL1: array_Multiplier
+MUL1: datapath_Multiplier
     generic map (m => n,
-                 n => n,
-                 q => 0)
+                 n => n)
     port map (x => i_Imn,
               y => tmp_mux3,
               o => tmp_mul1); 
 
-MUL2: array_Multiplier
+MUL2: datapath_Multiplier
     generic map (m => n,
-                 n => n,
-                 q => 0)
+                 n => n)
     port map (x => tmp_mux4,
               y => i_Wmn,
               o => tmp_mul2);
 
-MUL3: array_Multiplier
+MUL3: datapath_Multiplier
     generic map (m => n,
-                 n => n,
-                 q => 0)
-    port map (x => tmp_mul1,
-              y => tmp_mul2,
+                 n => n)
+    port map (x => tmp_mul1(11 downto 4),
+              y => tmp_mul2(11 downto 4),
               o => tmp_mul3);
 
 MUX5: MUX21
     generic map (n => n)
-    port map (i_input1 => tmp_mul1,
+    port map (i_input1 => tmp_mul1(15 downto 8),
               i_input2 => i_Imn,
               i_sel => i_select,
               o_res => tmp_mux5);
               
 MUX6: MUX21
     generic map (n => n)
-    port map (i_input1 => tmp_mul2,
-              i_input2 => tmp_mul3,
+    port map (i_input1 => tmp_mul2(15 downto 8),
+              i_input2 => tmp_mul3(15 downto 8),
               i_sel => i_select,
               o_res => tmp_mux6);
               
@@ -293,8 +304,14 @@ ADDER: addsub
               i_b => tmp_mux6,
               i_cin => '0',
               i_ctrl => '1', -- add
-              o_cout => open,
-              o_z => o_IWmn);
+              o_cout => cout_adder,
+              o_z => o_adder);
              
+MUX7: MUX21
+    generic map (n => n)
+    port map (i_input1 => "11111111",
+              i_input2 => o_adder,
+              i_sel => cout_adder,
+              o_res => o_IWmn);
               
 end Behavioral;
