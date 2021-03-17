@@ -33,16 +33,29 @@ entity controller is
         out_write_addr: out std_logic_vector(7 downto 0);
         alpha_read_addr: out std_logic_vector(7 downto 0);
         beta_read_addr: out std_logic_vector(7 downto 0);
-        o_read_addr: out std_logic_vector(7 downto 0)
+        out_read_addr: out std_logic_vector(7 downto 0)
         );
 end controller;
 
 architecture Behavioral of controller is
 
+component addsub is
+    generic (n: natural:= 8);
+    port(
+        i_a: in std_logic_vector(n-1 downto 0);
+        i_b: in std_logic_vector(n-1 downto 0);
+        i_cin: in std_logic;
+        i_ctrl: in std_logic;
+        o_cout: out std_logic;
+        o_z: out std_logic_vector(n-1 downto 0)
+    );
+end component;
+
 type state_type is (S_INIT, S_READ_BLOCK, S_WRITE_BLOCK, S_DISPLAY_IMAGE, S_WRITE_PIXEL, S_READ_PIXEL);
 signal block_completed, image_completed: std_logic := '0';
 signal curr_state : state_type := S_INIT;
 signal next_state : state_type := curr_state;
+signal reg_file_index: std_logic_vector(5 downto 0) := "000000"; 
 
 begin
 
@@ -55,10 +68,16 @@ begin
                 elsif i_select = '0' then next_state <= S_READ_PIXEL;
                 else next_state <= S_READ_BLOCK;
                 end if;
-            when S_READ_BLOCK =>
+            when S_READ_BLOCK =>            
+                alpha_write_addr <= reg_file_index;
+                beta_write_addr <= reg_file_index;
+                
+                reg_file_index <= reg_file_index + 1;    
                 if block_completed = '0' then next_state <= S_READ_BLOCK;
                 else next_state <= S_WRITE_BLOCK;
                 end if;
+                
+                
             when S_WRITE_BLOCK =>
                 if block_completed = '0' then next_state <= S_WRITE_BLOCK;
                 elsif image_completed = '0' then next_state <= S_READ_BLOCK;
