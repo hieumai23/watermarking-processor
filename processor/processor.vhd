@@ -67,20 +67,17 @@ architecture Behavioral of processor is
             );
     end component;
 
-    component controller is
+    component controller is 
+        generic(n: integer := 8);
         port(
             i_clk: in std_logic;
             i_start: in std_logic;
             i_select: in std_logic;
-            i_block_completed: in std_logic;
-            i_image_completed: in std_logic;
             
-            o_init: out std_logic;
-            o_read_block: out std_logic;
-            o_write_block: out std_logic;
-            o_display_image: out std_logic;
-            o_write_pixel: out std_logic;
-            o_read_pixel: out std_logic
+            write_addr: out std_logic_vector(7 downto 0);        
+            read_addr: out std_logic_vector(7 downto 0);
+            in_rw_en: out std_logic_vector(1 downto 0);           
+            out_rw_en: out std_logic_vector(1 downto 0)
             );
     end component;
 
@@ -95,19 +92,27 @@ architecture Behavioral of processor is
         );
     end component;
     
-    signal a_write_addr, b_write_addr, o_write_addr, a_read_addr, b_read_addr, o_read_addr: std_logic_vector(5 downto 0);
-    signal a_write_data, b_write_data, o_write_data, a_read_data, b_read_data, o_read_data: std_logic_vector(7 downto 0);
-    signal a_rw_en, b_rw_en, o_rw_en: std_logic_vector(1 downto 0);
+    signal image_write_addr, wmk_write_addr, o_write_addr, image_read_addr, wmk_read_addr, o_read_addr: std_logic_vector(5 downto 0);
+    signal image_write_data, wmk_write_data, o_write_data, image_read_data, wmk_read_data, o_read_data: std_logic_vector(7 downto 0);
+    signal image_rw_en, wmk_rw_en, o_rw_en: std_logic_vector(1 downto 0);
 
+    signal write_addr, read_addr: std_logic_vector(7 downto 0);
+    signal in_rw_en, out_rw_en: std_logic_vector(1 downto 0);
+    signal tmp_edge1, tmp_edge2, tmp_edge3: std_logic_vector(7 downto 0);
+    
+    type edge_state_type is (S_EDGE1, S_EDGE2, S_EDGE3);
+    signal edge_state : edge_state_type := S_EDGE1;
+    signal next_edge_state : edge_state_type := edge_state;
+    signal tmp_Wmn, tmp_output: std_logic_vector(7 downto 0);
 begin
               
 U_DATAPATH: datapath
     generic map (n) 
-    port map (i_Imn => i_Img,
-              i_Imn_m => "00000000",
-              i_Imn_n => "00000000",
-              i_amplitude_threshold => "00000000",
-              i_Wmn => i_Wmk,
+    port map (i_Imn => tmp_edge1,
+              i_Imn_m => tmp_edge3,
+              i_Imn_n => tmp_edge2,
+              i_amplitude_threshold => "10000000",
+              i_Wmn => wmk_read_data,
               i_select => i_select,
               i_ai => i_aI,
               i_amax => i_amax,
@@ -117,43 +122,62 @@ U_DATAPATH: datapath
               i_clk => i_clk,
               i_reset => i_reset,
               i_enable => '1',
-              o_IWmn => o_Img);
+              o_IWmn => o_write_data);
 
-ALPHA: reg_file_8b
-    port map (w_addr => a_write_addr,
-              w_data => a_write_data,
-              rw_en => a_rw_en,
-              r_addr => a_read_addr,
-              r_data => a_read_data,
+IMAGE: reg_file_8b
+    port map (w_addr => write_addr(5 downto 0),
+              w_data => i_Img,
+              rw_en => in_rw_en,
+              r_addr => read_addr(5 downto 0),
+              r_data => image_read_data,
               clk => i_clk);
               
-BETA: reg_file_8b
-    port map (w_addr => b_write_addr,
-              w_data => b_write_data,
-              rw_en => b_rw_en,
-              r_addr => b_read_addr,
-              r_data => b_read_data,
+WATERMARK: reg_file_8b
+    port map (w_addr => write_addr(5 downto 0),
+              w_data => i_Wmk,
+              rw_en => in_rw_en,
+              r_addr => read_addr(5 downto 0),
+              r_data => wmk_read_data,
               clk => i_clk);
 
 OUTPUT: reg_file_8b
-    port map (w_addr => o_write_addr,
+    port map (w_addr => write_addr(5 downto 0),
               w_data => o_write_data,
-              rw_en => o_rw_en,
-              r_addr => o_read_addr,
+              rw_en => out_rw_en,
+              r_addr => read_addr(5 downto 0),
               r_data => o_read_data,
               clk => i_clk);
 
 CTRL: controller
+    generic map (n)
     port map (i_clk => i_clk,
               i_start => i_start,
               i_select => i_select,
+              write_addr => write_addr,
+              read_addr => read_addr,
+              in_rw_en => in_rw_en,
+              out_rw_en => out_rw_en);
               
-              alpha_write_addr => a_write_addr,
-              beta_write_addr => b_write_addr,
-              out_write_addr => o_write_addr,
-              alpha_read_addr => a_read_addr,
-              beta_read_addr => b_read_addr,
-              out_read_addr => o_read_addr);
-              
+process(i_clk)
+begin
+    if i_clk'event and i_clk = '1' then      
+        if in_rw_en = "01" then
+            case edge_state is
+                when S_EDGE1 => -- load the middle pixel
+                    tmp_edge1 <= image_read_data;
+                    next_edge_state <= S_EDGE2;
+                when S_EDGE2 =>
+                    tmp_edge2 <= image_read_data;
+                    next_edge_state <= S_EDGE3;
+                when S_EDGE3 =>
+                    tmp_edge3 <= image_read_data;
+                    next_edge_state <= S_EDGE1;
+            end case;
+        end if;
+    end if;
+    edge_state <= next_edge_state;
+end process;
+
+o_Img <= o_read_data;
 
 end Behavioral;

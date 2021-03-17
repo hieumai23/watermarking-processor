@@ -1,0 +1,13 @@
+restart
+add_force {/processor/i_clk} -radix hex {1 0ns} {0 500ps} -repeat_every 1000ps
+add_force {/processor/i_reset} -radix hex {1 0ns}
+add_force {/processor/i_start} -radix hex {1 0ns}
+add_force {/processor/i_start} -radix hex {0 0ns}
+add_force {/processor/i_aI} -radix unsigned {2 0ns}
+add_force {/processor/i_select} -radix hex {0 0ns}
+add_force {/processor/i_amax} -radix bin {00111111 0ns}
+add_force {/processor/i_amin} -radix bin {00111101 0ns}
+add_force {/processor/i_bmax} -radix bin {00000101 0ns}
+add_force {/processor/i_bmin} -radix bin {00000001 0ns}
+add_force {/processor/i_Img} -radix unsigned {2 0ns}
+run 1ns
