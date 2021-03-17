@@ -51,7 +51,7 @@ architecture Behavioral of controller is
     end component;
     
     type state_type is (S_INIT, S_ALGO1, S_READ_BLOCK, S_COMPUTE_BLOCK, S_WRITE_BLOCK, S_DISPLAY_IMAGE);
-    signal compute_block_completed, write_block_completed, read_block_completed: std_logic := '0';
+    signal display_completed, compute_block_completed, write_block_completed, read_block_completed: std_logic := '0';
     signal curr_state : state_type := S_INIT;
     signal next_state : state_type := curr_state;
     signal tmp_index, reg_file_index: std_logic_vector(7 downto 0) := "00000000";
@@ -98,6 +98,7 @@ begin
                 compute_block_completed <= '0';
                 write_block_completed <= '0';
                 read_block_completed <= '0';
+                display_completed <= '0';
                 reg_file_index <= "00000000";
                 in_rw_en <= "00";
                 out_rw_en <= "00";
@@ -116,9 +117,13 @@ begin
                 end if;
                 
                 if read_block_completed = '0' then next_state <= S_READ_BLOCK;
-                elsif i_select = '0'then
-                    next_state <= S_ALGO1;
-                else next_state <= S_COMPUTE_BLOCK;
+                else
+                    reg_file_index <= "00000000"; 
+                    if i_select = '0'then
+                        next_state <= S_ALGO1;
+                    else 
+                        next_state <= S_COMPUTE_BLOCK;
+                    end if;
                 end if;
                 
             when S_COMPUTE_BLOCK =>
@@ -149,7 +154,9 @@ begin
                         end if;
                         
                         if compute_block_completed =  '0' then next_state <= S_COMPUTE_BLOCK;
-                        else next_state <= S_WRITE_BLOCK;
+                        else 
+                            reg_file_index <= "00000000"; 
+                            next_state <= S_WRITE_BLOCK;
                         end if;              
                     when S_EDGE2 =>
                         read_addr <= edge_detect_n;
@@ -173,12 +180,26 @@ begin
                 end if;
                 
                 if write_block_completed = '0' then next_state <= S_WRITE_BLOCK;
-                else next_state <= S_DISPLAY_IMAGE;
+                else 
+                    reg_file_index <= "00000000"; 
+                    next_state <= S_DISPLAY_IMAGE;
                 end if;
             when S_DISPLAY_IMAGE =>
+--                out_rw_en <= "01"; -- read
+--                if reg_file_index = "00111111" then
+--                    display_completed <= '1';
+--                    reg_file_index <= "00000000";
+--                else
+--                    reg_file_index <= tmp_index;
+--                end if;
+                
+--                if display_completed = '0' then next_state <= S_DISPLAY_IMAGE;
+--                else next_state <= S_INIT;
+--                end if;
                 next_state <= S_INIT;
+                
             when S_ALGO1 =>
-                in_rw_en <= "01"; -- read
+                in_rw_en <= "01"; -- 
                 read_addr <= reg_file_index;
                 if reg_file_index = "00111111" then
                     compute_block_completed <= '1';
@@ -188,7 +209,9 @@ begin
                 end if;
                 
                 if compute_block_completed =  '0' then next_state <= S_ALGO1;
-                else next_state <= S_DISPLAY_IMAGE;
+                else
+                    reg_file_index <= "00000000";  
+                    next_state <= S_WRITE_BLOCK;
                 end if;
         end case;
     end if;

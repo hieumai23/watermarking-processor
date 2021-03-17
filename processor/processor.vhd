@@ -92,9 +92,7 @@ architecture Behavioral of processor is
         );
     end component;
     
-    signal image_write_addr, wmk_write_addr, o_write_addr, image_read_addr, wmk_read_addr, o_read_addr: std_logic_vector(5 downto 0);
-    signal image_write_data, wmk_write_data, o_write_data, image_read_data, wmk_read_data, o_read_data: std_logic_vector(7 downto 0);
-    signal image_rw_en, wmk_rw_en, o_rw_en: std_logic_vector(1 downto 0);
+    signal o_write_data, image_read_data, wmk_read_data, o_read_data: std_logic_vector(7 downto 0);
 
     signal write_addr, read_addr: std_logic_vector(7 downto 0);
     signal in_rw_en, out_rw_en: std_logic_vector(1 downto 0);
@@ -108,7 +106,7 @@ begin
               
 U_DATAPATH: datapath
     generic map (n) 
-    port map (i_Imn => tmp_edge1,
+    port map (i_Imn => image_read_data,
               i_Imn_m => tmp_edge3,
               i_Imn_n => tmp_edge2,
               i_amplitude_threshold => "10000000",
@@ -160,24 +158,29 @@ CTRL: controller
               
 process(i_clk)
 begin
-    if i_clk'event and i_clk = '1' then      
+    if i_clk'event and i_clk = '1' then
         if in_rw_en = "01" then
-            case edge_state is
-                when S_EDGE1 => -- load the middle pixel
-                    tmp_edge1 <= image_read_data;
-                    next_edge_state <= S_EDGE2;
-                when S_EDGE2 =>
-                    tmp_edge2 <= image_read_data;
-                    next_edge_state <= S_EDGE3;
-                when S_EDGE3 =>
-                    tmp_edge3 <= image_read_data;
-                    next_edge_state <= S_EDGE1;
-            end case;
+            if i_select = '1' then
+                case edge_state is
+                    when S_EDGE1 => -- load the middle pixel
+                        tmp_edge1 <= image_read_data;
+                        next_edge_state <= S_EDGE2;
+                    when S_EDGE2 =>
+                        tmp_edge2 <= image_read_data;
+                        next_edge_state <= S_EDGE3;
+                    when S_EDGE3 =>
+                        tmp_edge3 <= image_read_data;
+                        next_edge_state <= S_EDGE1;
+                end case;
+            else
+                tmp_edge1 <= image_read_data;
+            end if;
         end if;
+        
     end if;
     edge_state <= next_edge_state;
 end process;
 
-o_Img <= o_read_data;
+o_Img <= o_write_data;
 
 end Behavioral;
