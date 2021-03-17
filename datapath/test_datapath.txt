@@ -18,13 +18,13 @@ add_force {/datapath/i_reset} -radix hex {0 0ns}
 run 1 ns
 add_force {/datapath/i_Imn} -radix hex {65 0ns}
 run 2 ns
-dd_force {/datapath/i_Imn_m} -radix hex {45 0ns}
+add_force {/datapath/i_Imn_m} -radix hex {45 0ns}
 add_force {/datapath/i_Imn_n} -radix hex {83 0ns}
 run 10 ns
 add_force {/datapath/i_select} -radix hex {0 0ns}
 add_force {/datapath/i_reset} -radix hex {1 0ns}
-add_force {/datapath/i_Imn} -radix unsigned {245 0ns}
-add_force {/datapath/i_Wmn} -radix unsigned {255 0ns}
+add_force {/datapath/i_Imn} -radix unsigned {192 0ns}
+add_force {/datapath/i_Wmn} -radix unsigned {200 0ns}
 add_force {/datapath/i_ai} -radix bin {00000010 0ns}
 run 1 ns
 add_force {/datapath/i_reset} -radix hex {0 0ns}
