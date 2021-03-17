@@ -76,7 +76,8 @@ architecture Behavioral of processor is
             
             addr: out std_logic_vector(7 downto 0);        
             in_rw_en: out std_logic_vector(1 downto 0);           
-            out_rw_en: out std_logic_vector(1 downto 0)
+            out_rw_en: out std_logic_vector(1 downto 0);
+            datapath_en: out std_logic
             );
     end component;
 
@@ -94,6 +95,7 @@ architecture Behavioral of processor is
 
     signal tmp_addr: std_logic_vector(7 downto 0);
     signal in_rw_en, out_rw_en: std_logic_vector(1 downto 0);
+    signal tmp_datapath_en: std_logic;
     signal tmp_edge1, tmp_edge2, tmp_edge3: std_logic_vector(7 downto 0);
     
     type edge_state_type is (S_EDGE0, S_EDGE1, S_EDGE2, S_EDGE3);
@@ -117,7 +119,7 @@ U_DATAPATH: datapath
               i_bmin => i_bmin,
               i_clk => i_clk,
               i_reset => i_reset,
-              i_enable => '1',
+              i_enable => tmp_datapath_en,
               o_IWmn => o_write_data);
 
 IMAGE: reg_file_8b
@@ -148,7 +150,8 @@ CTRL: controller
               i_select => i_select,
               addr => tmp_addr,
               in_rw_en => in_rw_en,
-              out_rw_en => out_rw_en);
+              out_rw_en => out_rw_en,
+              datapath_en => tmp_datapath_en);
               
 process(i_clk)
 begin

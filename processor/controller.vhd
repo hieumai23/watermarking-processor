@@ -31,7 +31,8 @@ entity controller is
         
         addr: out std_logic_vector(7 downto 0);
         in_rw_en: out std_logic_vector(1 downto 0);
-        out_rw_en: out std_logic_vector(1 downto 0)
+        out_rw_en: out std_logic_vector(1 downto 0);
+        datapath_en: out std_logic
         );
 end controller;
 
@@ -101,7 +102,7 @@ begin
                 reg_file_index <= "00000000";
                 in_rw_en <= "00";
                 out_rw_en <= "00";
-                
+                datapath_en <= '0';
                 if i_start = '0' then next_state <= S_INIT;
                 else next_state <= S_READ_BLOCK;
                 end if;
@@ -130,6 +131,7 @@ begin
                 in_rw_en <= "01"; -- read
                 case edge_state is
                     when S_EDGE1 => 
+                        datapath_en <= '0';
                         addr <= reg_file_index;
                         next_edge_state <= S_EDGE2;
                         
@@ -164,6 +166,7 @@ begin
                         addr <= edge_detect_m;
                         next_edge_state <= S_EDGE4;
                     when S_EDGE4 =>
+                        datapath_en <= '1';
                         next_edge_state <= S_EDGE1;
                 end case;
                
