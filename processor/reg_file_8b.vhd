@@ -35,10 +35,9 @@ use IEEE.NUMERIC_STD.ALL;
 --64 rows
 entity reg_file_8b is
 port(
-    w_addr: in std_logic_vector(5 downto 0);
+    addr: in std_logic_vector(5 downto 0);
     w_data: in std_logic_vector (7 downto 0);
     rw_en: in std_logic_vector (1 downto 0);
-    r_addr: in std_logic_vector(5 downto 0);
     r_data: out std_logic_vector(7 downto 0);
     clk: in std_logic
 );
@@ -62,41 +61,26 @@ end component;
 
 type RW_DEC is array (0 to 63) of std_logic_vector(1 downto 0);
 
-signal w_addr_decode: std_logic_vector(63 downto 0);
-signal r_addr_decode: std_logic_vector(63 downto 0);
+signal addr_decode: std_logic_vector(63 downto 0);
 signal sel: RW_DEC;
+
+signal tmp_rw_en: std_logic_vector(1 downto 0);
 
 begin
 
-r_decoder: decoder_6_to_64 port map (sel6 => r_addr, y => r_addr_decode);
-w_decoder: decoder_6_to_64 port map (sel6 => w_addr, y => w_addr_decode);
+decoder: decoder_6_to_64 port map (sel6 => addr, y => addr_decode);
+
+GEN_SEL: for j in 0 to 63 generate
+    sel(j) <= rw_en and (addr_decode(j)&addr_decode(j));
+end generate GEN_SEL;
 
 GEN_ROW: 
 for i in 0 to 63 generate
-    row_x: mem_row_8b port map(w_data => w_data, rw_en => sel(i), clk => clk, q => r_data);
+    row_x: mem_row_8b port map(w_data => w_data, 
+    rw_en => sel(i), 
+    clk => clk, 
+    q => r_data);
 end generate GEN_ROW;
 
-
-process(clk)
-begin
-
-if clk'event and clk = '1' then
-    case rw_en is
-        when "01" => --read
-            for j in 0 to 63 loop
-                sel(j) <= (0 => r_addr_decode(j) and rw_en(0), 1 => r_addr_decode(j) and rw_en(1));
-            end loop;
-        when "10" => --write
-            for j in 0 to 63 loop
-                sel(j) <= (0 => w_addr_decode(j) and rw_en(0), 1 => w_addr_decode(j) and rw_en(1));
-            end loop;
-        when others =>
-            for j in 0 to 63 loop
-                sel(j) <= "00";
-            end loop;
-    end case;
-end if;
-
-end process;
 
 end Behavioral;

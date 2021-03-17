@@ -74,8 +74,7 @@ architecture Behavioral of processor is
             i_start: in std_logic;
             i_select: in std_logic;
             
-            write_addr: out std_logic_vector(7 downto 0);        
-            read_addr: out std_logic_vector(7 downto 0);
+            addr: out std_logic_vector(7 downto 0);        
             in_rw_en: out std_logic_vector(1 downto 0);           
             out_rw_en: out std_logic_vector(1 downto 0)
             );
@@ -83,10 +82,9 @@ architecture Behavioral of processor is
 
     component reg_file_8b is
         port(
-            w_addr: in std_logic_vector(5 downto 0);
+            addr: in std_logic_vector(5 downto 0);
             w_data: in std_logic_vector (7 downto 0);
             rw_en: in std_logic_vector (1 downto 0);
-            r_addr: in std_logic_vector(5 downto 0);
             r_data: out std_logic_vector(7 downto 0);
             clk: in std_logic
         );
@@ -94,12 +92,12 @@ architecture Behavioral of processor is
     
     signal o_write_data, image_read_data, wmk_read_data, o_read_data: std_logic_vector(7 downto 0);
 
-    signal write_addr, read_addr: std_logic_vector(7 downto 0);
+    signal tmp_addr: std_logic_vector(7 downto 0);
     signal in_rw_en, out_rw_en: std_logic_vector(1 downto 0);
     signal tmp_edge1, tmp_edge2, tmp_edge3: std_logic_vector(7 downto 0);
     
-    type edge_state_type is (S_EDGE1, S_EDGE2, S_EDGE3);
-    signal edge_state : edge_state_type := S_EDGE1;
+    type edge_state_type is (S_EDGE0, S_EDGE1, S_EDGE2, S_EDGE3);
+    signal edge_state : edge_state_type := S_EDGE0;
     signal next_edge_state : edge_state_type := edge_state;
     signal tmp_Wmn, tmp_output: std_logic_vector(7 downto 0);
 begin
@@ -123,26 +121,23 @@ U_DATAPATH: datapath
               o_IWmn => o_write_data);
 
 IMAGE: reg_file_8b
-    port map (w_addr => write_addr(5 downto 0),
+    port map (addr => tmp_addr(5 downto 0),
               w_data => i_Img,
               rw_en => in_rw_en,
-              r_addr => read_addr(5 downto 0),
               r_data => image_read_data,
               clk => i_clk);
               
 WATERMARK: reg_file_8b
-    port map (w_addr => write_addr(5 downto 0),
+    port map (addr => tmp_addr(5 downto 0),
               w_data => i_Wmk,
               rw_en => in_rw_en,
-              r_addr => read_addr(5 downto 0),
               r_data => wmk_read_data,
               clk => i_clk);
 
 OUTPUT: reg_file_8b
-    port map (w_addr => write_addr(5 downto 0),
+    port map (addr => tmp_addr(5 downto 0),
               w_data => o_write_data,
               rw_en => out_rw_en,
-              r_addr => read_addr(5 downto 0),
               r_data => o_read_data,
               clk => i_clk);
 
@@ -151,8 +146,7 @@ CTRL: controller
     port map (i_clk => i_clk,
               i_start => i_start,
               i_select => i_select,
-              write_addr => write_addr,
-              read_addr => read_addr,
+              addr => tmp_addr,
               in_rw_en => in_rw_en,
               out_rw_en => out_rw_en);
               
@@ -162,6 +156,8 @@ begin
         if in_rw_en = "01" then
             if i_select = '1' then
                 case edge_state is
+                    when S_EDGE0 =>
+                        next_edge_state <= S_EDGE1;
                     when S_EDGE1 => -- load the middle pixel
                         tmp_edge1 <= image_read_data;
                         next_edge_state <= S_EDGE2;
@@ -170,7 +166,7 @@ begin
                         next_edge_state <= S_EDGE3;
                     when S_EDGE3 =>
                         tmp_edge3 <= image_read_data;
-                        next_edge_state <= S_EDGE1;
+                        next_edge_state <= S_EDGE0;
                 end case;
             else
                 tmp_edge1 <= image_read_data;

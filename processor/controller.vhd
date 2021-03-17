@@ -29,8 +29,7 @@ entity controller is
         i_start: in std_logic;
         i_select: in std_logic;
         
-        write_addr: out std_logic_vector(7 downto 0);        
-        read_addr: out std_logic_vector(7 downto 0);
+        addr: out std_logic_vector(7 downto 0);
         in_rw_en: out std_logic_vector(1 downto 0);
         out_rw_en: out std_logic_vector(1 downto 0)
         );
@@ -107,7 +106,7 @@ begin
                 else next_state <= S_READ_BLOCK;
                 end if;
             when S_READ_BLOCK =>    
-                write_addr <= reg_file_index;
+                addr <= reg_file_index;
                 in_rw_en <= "10"; -- write
                 if reg_file_index = "00111111" then
                     read_block_completed <= '1';
@@ -131,7 +130,7 @@ begin
                 in_rw_en <= "01"; -- read
                 case edge_state is
                     when S_EDGE1 => 
-                        read_addr <= reg_file_index;
+                        addr <= reg_file_index;
                         next_edge_state <= S_EDGE2;
                         
                         if reg_file_index = "00110110" then
@@ -159,10 +158,10 @@ begin
                             next_state <= S_WRITE_BLOCK;
                         end if;              
                     when S_EDGE2 =>
-                        read_addr <= edge_detect_n;
+                        addr <= edge_detect_n;
                         next_edge_state <= S_EDGE3;
                     when S_EDGE3 =>
-                        read_addr <= edge_detect_m;
+                        addr <= edge_detect_m;
                         next_edge_state <= S_EDGE4;
                     when S_EDGE4 =>
                         next_edge_state <= S_EDGE1;
@@ -171,7 +170,7 @@ begin
             when S_WRITE_BLOCK =>
                 out_rw_en <= "10"; -- write
                 in_rw_en <= "00";
-                write_addr <= reg_file_index;
+                addr <= reg_file_index;
                 if reg_file_index = "00111111" then
                     write_block_completed <= '1';
                     reg_file_index <= "00000000";
@@ -200,7 +199,7 @@ begin
                 
             when S_ALGO1 =>
                 in_rw_en <= "01"; -- 
-                read_addr <= reg_file_index;
+                addr <= reg_file_index;
                 if reg_file_index = "00111111" then
                     compute_block_completed <= '1';
                     reg_file_index <= "00000000";
