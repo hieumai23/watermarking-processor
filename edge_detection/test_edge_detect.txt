@@ -1,0 +1,10 @@
+add_force {/edge_detection/i_amplitude_threshold} -radix unsigned {128 0ns}
+add_force {/edge_detection/i_Imn} -radix unsigned {200 0ns}
+add_force {/edge_detection/i_Imn_m} -radix unsigned {40 0ns}
+add_force {/edge_detection/i_Imn_n} -radix unsigned {50 0ns}
+add_force {/edge_detection/i_reset} -radix hex {1 0ns}
+add_force {/edge_detection/i_enable} -radix hex {1 0ns}
+add_force {/edge_detection/i_clk} -radix hex {1 0ns} {0 500ps} -repeat_every 1000ps
+run 1 ns
+add_force {/edge_detection/i_reset} -radix hex {0 0ns}
+run 21 ns
