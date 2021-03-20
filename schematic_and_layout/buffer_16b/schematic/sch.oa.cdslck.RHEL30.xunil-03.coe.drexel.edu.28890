@@ -1,0 +1,16 @@
+#
+# Edit Lock-Stake file. CAUTION: Please do not change.
+#
+# Information about current Edit Lock Owner.
+#
+LockStakeVersion               1.1
+LoginName                      hdd29
+HostName                       xunil-03.coe.drexel.edu
+ProcessIdentifier              28890
+ProcessCreationTime_UTC        1615687041
+ProcessCreationTime_Readable   Sat Mar 13 20:57:21 2021 EST
+AppIdentifier                  OA File System Design Manager
+OSType                         unix
+ReasonForPlacingEditLock       OpenAccess edit lock
+FilePathUsedToEditLock         /home/hdd29@drexel.edu/NCSU_FreePDK45/watermark_proc/buffer_16b/schematic/sch.oa.cdslck
+TimeEditLocked                 Sun Mar 14 01:27:28 2021 EST
